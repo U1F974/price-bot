@@ -10,11 +10,21 @@ import { pairId } from './price-checker/utils.js';
  */
 
 /**
+ * @description What may stand between the two codes. Longest form last is fine - the
+ * regex backtracks - but nothing here is a regex metacharacter, so the list goes into
+ * the pattern as it is. `/help` lists it, so the two cannot drift apart.
+ */
+const SEPARATORS = ['to', 'in', 'into', 'в', '->', '=>', '→', '>', '=', '/'];
+
+/**
  * @description `100 rub to usd`, `1,5 ETH -> RUB`, `20 usd в rub`, `50 rub / eth`.
  * Anchored on purpose: only a message that is nothing but a conversion request is
  * treated as one.
  */
-const REQUEST_RE = /^\s*(\d+(?:[.,]\d+)?)\s*([a-z]{2,10})\s*(?:to|in|into|в|->|=>|→|>|=|\/)\s*([a-z]{2,10})\s*$/iu;
+const REQUEST_RE = new RegExp(
+  String.raw`^\s*(\d+(?:[.,]\d+)?)\s*([a-z]{2,10})\s*(?:${SEPARATORS.join('|')})\s*([a-z]{2,10})\s*$`,
+  'iu',
+);
 
 /**
  * @description Which side of a pair makes it `crypto`. Derived from the reported pairs,
@@ -39,6 +49,9 @@ const RATE_TTL_MS = 60 * 1000 * 15;
  * scheduled report uses. One instance per bot: the rate cache lives on it.
  */
 export class Converter {
+  /** @description Accepted separators, in the order the pattern tries them. @type {string[]} */
+  static separators = SEPARATORS;
+
   /** @type {string[]} */
   bridges;
   /** @type {number} in ms */
@@ -90,7 +103,7 @@ export class Converter {
   }
 
   /**
-   * @description Rate for one unit of `from` in `to`, reused for `ttlMs` - a burst of
+   * @description Rate for one unit of `from` in `to`, reused for `ttl` ms - a burst of
    * messages must not turn into a burst of provider requests. A miss is cached too:
    * an unknown code is exactly what a spamming chat retries.
    * @param {string} from

@@ -1,3 +1,5 @@
+import { pairId } from './price-checker/utils.js';
+
 /**
  * @description Renders quotes as one `[kind]` block per pair kind. Sections follow
  * the order the kinds first appear in, so a new kind needs no change here.
@@ -47,3 +49,32 @@ export const renderConversion = ({ amount, from, to, value, rate, sources }) => 
 
   return `${head}\n<i>1 ${from} = ${fmtNumber(rate)} ${to} (${sources.join(' + ')})</i>`;
 };
+
+/**
+ * @description The `/help` reply. Built from the same data the bot runs on - configured
+ * pairs, registered strategies, accepted separators - so it cannot describe a bot that
+ * no longer exists.
+ * @param {{ pairs: import('./price-checker/utils.js').Pair[], strategies: string[], separators: string[], cronTime: string }} state
+ * @returns {string}
+ */
+export const renderHelp = ({ pairs, strategies, separators, cronTime }) =>
+  [
+    '<b>Price bot</b>',
+    '',
+    `Posts a rate report on a schedule (<code>${cronTime}</code>) and converts on request.`,
+    '',
+    '<b>Conversion</b>',
+    'Send a message that is nothing but the request:',
+    '<code>100 rub to usd</code>',
+    '<code>1,5 eth -> rub</code>',
+    '<code>50 rub / eth</code>',
+    '',
+    `Separators: ${separators.map((separator) => `<code>${separator}</code>`).join(' ')}`,
+    'Any pair works in either direction, crossed through other rates when nobody quotes it',
+    'directly. Unknown currencies get no answer.',
+    '',
+    '<b>Reported pairs</b>',
+    `<code>${pairs.map(pairId).join('  ')}</code>`,
+    '',
+    `<b>Sources</b>: ${strategies.join(', ')}`,
+  ].join('\n');

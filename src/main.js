@@ -6,13 +6,29 @@ import { Bot } from 'grammy';
 import { PAIRS } from './config/pairs.js';
 import { Converter } from './converter.js';
 import { env } from './environment.js';
-import { renderConversion, renderMessage } from './format.js';
+import { renderConversion, renderHelp, renderMessage } from './format.js';
 import { logger } from './logger.js';
 import { PriceCheckerRegistry } from './price-checker/registry.js';
 
 const bot = new Bot(env.telegram.botToken, { client: { baseFetchConfig: { agent: undefined } } });
 const priceCheckers = new PriceCheckerRegistry();
 const converter = new Converter(priceCheckers);
+
+/**
+ * @description Describes the bot from what it is actually running with - pairs, loaded
+ * strategies, schedule - so the help cannot go stale. Commands reach the bot even with
+ * privacy mode on, which plain messages do not.
+ */
+bot.command(['help', 'start'], async (ctx) => {
+  const help = renderHelp({
+    pairs: PAIRS,
+    strategies: priceCheckers.names,
+    separators: Converter.separators,
+    cronTime: env.cron.time,
+  });
+
+  await ctx.reply(help, { parse_mode: 'HTML', reply_parameters: { message_id: ctx.msg.message_id } });
+});
 
 /**
  * @description Answers messages that are nothing but a conversion request, e.g.
@@ -80,6 +96,8 @@ try {
 
   await priceCheckers.ready();
   logger.info({ data: { strategies: priceCheckers.names }, msg: 'price checker strategies loaded' });
+
+  await bot.api.setMyCommands([{ command: 'help', description: 'What the bot does and how to ask it' }]);
 
   job.start();
 
