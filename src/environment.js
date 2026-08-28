@@ -2,11 +2,11 @@ import '@dotenvx/dotenvx/config.js';
 
 import envar from 'env-var';
 
-const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'];
-
-
 export const env = {
-  logLevel: envar.get('LOG_LEVEL').default('debug').asEnum(LOG_LEVELS),
+  logLevel: envar
+    .get('LOG_LEVEL')
+    .default('debug')
+    .asEnum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
   isPrettyLog: envar.get('LOG_PRETTY').default('true').asBool(),
   telegram: {
     botToken: envar.get('TELEGRAM_BOT_TOKEN').required().asString(),
